@@ -26,7 +26,7 @@ struct KeyMapping(KeyCode);
 
 fn setup(mut commands: Commands) {
     // Set up a 2D camera
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     // Define the layout and size of the squares
     let square_size = Vec2::new(100.0, 100.0);
@@ -59,7 +59,7 @@ fn setup(mut commands: Commands) {
         let y = start_y - (i / 4) as f32 * spacing;
 
         commands
-            .spawn_bundle(SpriteBundle {
+            .spawn(SpriteBundle {
                 sprite: Sprite {
                     color: Color::rgb(0.5, 0.5, 0.5),
                     custom_size: Some(square_size),
@@ -97,7 +97,7 @@ fn mouse_input_system(
 
     // Convert screen position to world position
     let world_position = if let Some(cursor_pos) = cursor_pos {
-        let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+        let window_size = Vec2::new(window.width(), window.height());
         let p = cursor_pos - window_size / 2.0;
         camera_transform.compute_matrix() * p.extend(0.0).extend(1.0)
     } else {
