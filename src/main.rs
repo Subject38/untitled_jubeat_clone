@@ -4,10 +4,10 @@ use bevy::window::PrimaryWindow;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup)
-        .add_system(keyboard_input_system)
-        .add_system(mouse_input_system)
-        .add_system(update_square_visuals)
+        .add_systems(Startup, setup)
+        .add_systems(Update, keyboard_input_system)
+        .add_systems(Update, mouse_input_system)
+        .add_systems(Update, update_square_visuals)
         .run();
 }
 
@@ -87,7 +87,7 @@ fn keyboard_input_system(
 
 fn mouse_input_system(
     mouse_button_input: Res<Input<MouseButton>>,
-    mut query: Query<(&Transform, &Sprite, &mut MouseActive, Entity)>,
+    mut query: Query<(&Transform, &Sprite, &mut MouseActive)>,
     primary_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<&GlobalTransform, With<Camera2d>>,
 ) {
@@ -101,14 +101,15 @@ fn mouse_input_system(
     // Convert screen position to world position
     let world_position = if let Some(cursor_pos) = cursor_pos {
         let window_size = Vec2::new(window.width(), window.height());
-        let p = cursor_pos - window_size / 2.0;
+        let cursor_pos_flipped = Vec2::new(cursor_pos.x, window.height() - cursor_pos.y);
+        let p = cursor_pos_flipped - window_size / 2.0;
         camera_transform.compute_matrix() * p.extend(0.0).extend(1.0)
     } else {
         // If the cursor is not within the window, we set it to an out-of-range position
         Vec4::new(f32::MAX, f32::MAX, 0.0, 0.0)
     };
 
-    for (transform, sprite, mut mouse_active, _entity) in query.iter_mut() {
+    for (transform, sprite, mut mouse_active) in query.iter_mut() {
         let size = sprite.custom_size.unwrap_or(Vec2::new(100.0, 100.0));
         let min = transform.translation - Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
         let max = transform.translation + Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
