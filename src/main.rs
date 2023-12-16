@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 fn main() {
     App::new()
@@ -87,10 +88,12 @@ fn keyboard_input_system(
 fn mouse_input_system(
     mouse_button_input: Res<Input<MouseButton>>,
     mut query: Query<(&Transform, &Sprite, &mut MouseActive, Entity)>,
-    windows: Res<Windows>,
+    primary_query: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<&GlobalTransform, With<Camera2d>>,
 ) {
-    let window = windows.get_primary().unwrap();
+    let Ok(window) = primary_query.get_single() else {
+        return;
+    };
     let cursor_pos = window.cursor_position();
 
     let camera_transform = camera_query.single();
