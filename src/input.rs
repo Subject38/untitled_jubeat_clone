@@ -20,6 +20,9 @@ pub fn keyboard_input_system(
     });
 }
 
+// TODO: If this ever breaks, rewrite this entire method
+// since it was written entirely with AI and I don't
+// actually understand what's going on here...
 pub fn mouse_input_system(
     mouse_button_input: Res<Input<MouseButton>>,
     mut query: Query<(&Transform, &Sprite, &mut MouseActive)>,
@@ -56,3 +59,6 @@ pub fn mouse_input_system(
             && mouse_button_input.pressed(MouseButton::Left);
     }
 }
+
+// TODO: Add HID controller support. Will require rebindable keys of course.
+// Also implement P4IO handling. This can thankfully be much more hardcoded.

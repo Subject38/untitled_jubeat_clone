@@ -12,6 +12,7 @@ pub fn setup(mut commands: Commands) {
     let start_y = 1.5 * spacing;
 
     // Define the mapping from keys to positions
+    // TODO: Make this mappable somehow.
     let keys = [
         KeyCode::Key1,
         KeyCode::Key2,
@@ -31,6 +32,14 @@ pub fn setup(mut commands: Commands) {
         KeyCode::V,
     ];
 
+    // TODO: This is a great starter for testing input, but all of this is going
+    // to the garbage. Need this to be a layout that scales when in 9 x 16 ratio.
+    // Once it looks good in that form, we can look into splitting the buttons
+    // into 1 window, and the info display to another like with jubeat analyser.
+    // A stretch goal will be to make 16x9 full screen look not terrible but
+    // the intended user is tablet players, arcade style controller users,
+    // or arcade machine users. In all of those cases, the vertical aspect
+    // ratio is to be assumed.
     for (i, &key) in keys.iter().enumerate() {
         let x = start_x + (i % 4) as f32 * spacing;
         let y = start_y - (i / 4) as f32 * spacing;
@@ -40,10 +49,10 @@ pub fn setup(mut commands: Commands) {
                 sprite: Sprite {
                     color: Color::rgb(0.5, 0.5, 0.5),
                     custom_size: Some(square_size),
-                    ..Default::default()
+                    ..default()
                 },
                 transform: Transform::from_xyz(x, y, 0.0),
-                ..Default::default()
+                ..default()
             })
             .insert(KeyMapping(key))
             .insert(MouseActive(false))
