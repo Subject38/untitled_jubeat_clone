@@ -20,43 +20,40 @@ pub fn keyboard_input_system(
     });
 }
 
-// TODO: If this ever breaks, rewrite this entire method
-// since it was written entirely with AI and I don't
-// actually understand what's going on here...
+// Code shamelessly stolen from https://bevy-cheatbook.github.io/cookbook/cursor2world.html
 pub fn mouse_input_system(
     mouse_button_input: Res<Input<MouseButton>>,
+    // query to get the window (so we can read the current cursor position)
+    q_window: Query<&Window, With<PrimaryWindow>>,
+    // query to get camera transform
+    q_camera: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
     mut query: Query<(&Transform, &Sprite, &mut MouseActive)>,
-    primary_query: Query<&Window, With<PrimaryWindow>>,
-    camera_query: Query<&GlobalTransform, With<Camera2d>>,
 ) {
-    let Ok(window) = primary_query.get_single() else {
-        return;
-    };
-    let cursor_pos = window.cursor_position();
+    // get the camera info and transform
+    // assuming there is exactly one main camera entity, so Query::single() is OK
+    let (camera, camera_transform) = q_camera.single();
 
-    let camera_transform = camera_query.single();
+    // There is only one primary window, so we can similarly get it from the query:
+    let window = q_window.single();
 
-    // Convert screen position to world position
-    let world_position = if let Some(cursor_pos) = cursor_pos {
-        let window_size = Vec2::new(window.width(), window.height());
-        let cursor_pos_flipped = Vec2::new(cursor_pos.x, window.height() - cursor_pos.y);
-        let p = cursor_pos_flipped - window_size / 2.0;
-        camera_transform.compute_matrix() * p.extend(0.0).extend(1.0)
-    } else {
-        // If the cursor is not within the window, we set it to an out-of-range position
-        Vec4::new(f32::MAX, f32::MAX, 0.0, 0.0)
-    };
+    // check if the cursor is inside the window and get its position
+    // then, ask bevy to convert into world coordinates, and truncate to discard Z
+    if let Some(world_position) = window
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .map(|ray| ray.origin.truncate())
+    {
+        for (transform, sprite, mut mouse_active) in query.iter_mut() {
+            let size = sprite.custom_size.unwrap_or(Vec2::new(100.0, 100.0));
+            let min = transform.translation - Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
+            let max = transform.translation + Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
 
-    for (transform, sprite, mut mouse_active) in query.iter_mut() {
-        let size = sprite.custom_size.unwrap_or(Vec2::new(100.0, 100.0));
-        let min = transform.translation - Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
-        let max = transform.translation + Vec3::new(size.x / 2.0, size.y / 2.0, 0.0);
-
-        mouse_active.0 = world_position.x >= min.x
-            && world_position.x <= max.x
-            && world_position.y >= min.y
-            && world_position.y <= max.y
-            && mouse_button_input.pressed(MouseButton::Left);
+            mouse_active.0 = world_position.x >= min.x
+                && world_position.x <= max.x
+                && world_position.y >= min.y
+                && world_position.y <= max.y
+                && mouse_button_input.pressed(MouseButton::Left);
+        }
     }
 }
 
